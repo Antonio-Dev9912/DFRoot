@@ -541,20 +541,19 @@ static int exploit(void) {
         const char *msg;
         int         rc;
     } markers[] = {
-        { "/dev/df",    "libc++: mutex acquired, loading custom module", -1 },
-        { "/dev/dfm0",  "dfroot: launching bootstrap",                   -1 },
-        { "/dev/dfme0", "***FAILED***: bootstrap could not read prefs",   1 },
-        { "/dev/dfm1",  "bootstrap: prefs loaded",                       -1 },
-        { "/dev/dfm7",  "bootstrap: adopting zygote env",                -1 },
-        { "/dev/dfmw0", "bootstrap: WARNING: adopt zygote env failed",   -1 },
-        { "/dev/dfm2",  "bootstrap: env adopted",                        -1 },
-        { "/dev/dfm8",  "bootstrap: setting partitions ro",              -1 },
-        { "/dev/dfmw1", "bootstrap: WARNING: set partitions ro failed",  -1 },
-        { "/dev/dfm3",  "bootstrap: partitions set ro",                  -1 },
-        { "/dev/dfmw2", "bootstrap: WARNING: disable modules failed",    -1 },
-        { "/dev/dfm4",  "bootstrap: starting SU daemon",                 -1 },
-        { "/dev/dfm5",  "***SUCCESS***",                                  0 },
-        { "/dev/dfme1", "***FAILED***: ksud exited with error",           1 },
+        { "/dev/df",    "libc++: mutex acquired, loading custom module",    -1 },
+        { "/dev/dfm0",  "dfroot: launching bootstrap",                      -1 },
+        { "/dev/dfme0", "***FAILED***: bootstrap could not read prefs",      1 },
+        { "/dev/dfm1",  "bootstrap: prefs loaded, switching to zygote env", -1 },
+        { "/dev/dfmw0", "bootstrap: WARNING: adopt zygote env failed",      -1 },
+        { "/dev/dfm2",  "bootstrap: adopted zygote env",                    -1 },
+        { "/dev/dfm8",  "bootstrap: setting partitions ro",                 -1 },
+        { "/dev/dfmw1", "bootstrap: WARNING: set partitions ro failed",     -1 },
+        { "/dev/dfm3",  "bootstrap: partitions set ro",                     -1 },
+        { "/dev/dfmw2", "bootstrap: WARNING: disable modules failed",       -1 },
+        { "/dev/dfm4",  "bootstrap: starting SU daemon",                    -1 },
+        { "/dev/dfm5",  "***SUCCESS***",                                     0 },
+        { "/dev/dfme1", "***FAILED***: ksud exited with error",              1 },
     };
     int seen[sizeof(markers)/sizeof(markers[0])] = {0};
 

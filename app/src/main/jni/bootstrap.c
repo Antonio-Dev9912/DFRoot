@@ -168,7 +168,6 @@ int main(void)
     }
     touch("/dev/dfm1");
 
-    touch("/dev/dfm7");
     if (adopt_zygote_env() == 0)
         touch("/dev/dfm2");
     else
