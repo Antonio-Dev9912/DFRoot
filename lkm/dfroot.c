@@ -38,8 +38,7 @@ static int __nocfi __init dfroot_init(void)
     struct kprobe kln_kp;
     struct kprobe defex_enforce_kp;
     struct kprobe defex_umh_kp;
-    struct kprobe oplus_exe_kp;
-    int defex_enforce_ok, oplus_exec_ok, defex_umh_ok;
+    int defex_enforce_ok, defex_umh_ok;
     void *info;
     int ret;
 
@@ -49,9 +48,9 @@ static int __nocfi __init dfroot_init(void)
     static char *envp[] = { "PATH=/system/bin", NULL };
     static char *argv[] = { (char *)sh, "-c", cmd, NULL };
     snprintf(cmd, sizeof(cmd),
-             "rmmod oplus_secure_harden 2>/dev/null;"
-             " rmmod oplus_security_keventupload 2>/dev/null;"
-             " rmmod oplus_security_guard 2>/dev/null;"
+             "rmmod oplus_secure_harden 2>/dev/null;"          //
+             " rmmod oplus_security_keventupload 2>/dev/null;" // Oppo/OnePlus
+             " rmmod oplus_security_guard 2>/dev/null;"        //
              " touch /dev/dfm0; exec %s", bootstrap);
 
     kln_kp = (struct kprobe){ .symbol_name = "kallsyms_lookup_name" };
@@ -105,15 +104,6 @@ static int __nocfi __init dfroot_init(void)
     else
         pr_info("dfroot: task_defex_user_exec hooked\n");
 
-    // Oppo/OnePlus
-    oplus_exe_kp = (struct kprobe){ .addr = (kprobe_opcode_t *)get_addr("oplus_exe_block_ret_handler"),
-                                    .pre_handler = null_pre_handler };
-    oplus_exec_ok = register_kprobe(&oplus_exe_kp) == 0;
-    if (!oplus_exec_ok)
-        pr_err("dfroot: oplus_exe_block_ret_handler not in this kernel, skipping\n");
-    else
-        pr_info("dfroot: oplus_exe_block_ret_handler hooked\n");
-
     // Launch bootstrap
     umh_setup = (umh_setup_t)get_addr("call_usermodehelper_setup");
     umh_exec  = (umh_exec_t)get_addr("call_usermodehelper_exec");
@@ -136,7 +126,6 @@ static int __nocfi __init dfroot_init(void)
 
 done:
     if (defex_enforce_ok) unregister_kprobe(&defex_enforce_kp);
-    if (oplus_exec_ok) unregister_kprobe(&oplus_exe_kp);
     if (defex_umh_ok)   unregister_kprobe(&defex_umh_kp);
     return -E2BIG; /* return any error to unload module */
 }
