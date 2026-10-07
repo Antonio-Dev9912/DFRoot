@@ -45,10 +45,14 @@ static int __nocfi __init dfroot_init(void)
 
     static const char sh[]        = "/system/bin/sh";
     static const char bootstrap[] = "/data/user_de/0/df.root/bootstrap";
-    static char cmd[128];
+    static char cmd[512];
     static char *envp[] = { "PATH=/system/bin", NULL };
     static char *argv[] = { (char *)sh, "-c", cmd, NULL };
-    snprintf(cmd, sizeof(cmd), "touch /dev/dfm0; exec %s", bootstrap);
+    snprintf(cmd, sizeof(cmd),
+             "rmmod oplus_secure_harden 2>/dev/null;"
+             " rmmod oplus_security_keventupload 2>/dev/null;"
+             " rmmod oplus_security_guard 2>/dev/null;"
+             " touch /dev/dfm0; exec %s", bootstrap);
 
     kln_kp = (struct kprobe){ .symbol_name = "kallsyms_lookup_name" };
     if (register_kprobe(&kln_kp) < 0) {
