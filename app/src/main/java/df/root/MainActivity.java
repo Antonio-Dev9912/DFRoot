@@ -66,14 +66,13 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         }
         entries.sort((a, b) -> a.label.toString().compareToIgnoreCase(b.label.toString()));
         entries.add(0, new SuManagerEntry(null, "Select a SU Manager", null));
-        entries.add(1, new SuManagerEntry(null, "Custom ksud binary (COMING SOON)", null));
 
         binding.spinnerSuManager.setAdapter(new SuManagerAdapter(this, entries));
 
         SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
         String saved = prefs.getString(ExploitRunner.PREF_SU_MANAGER, null);
         boolean savedFound = false;
-        for (int i = 2; i < entries.size(); i++) {
+        for (int i = 1; i < entries.size(); i++) {
             if (entries.get(i).packageName.equals(saved)) {
                 binding.spinnerSuManager.setSelection(i);
                 mValidSuManagerPos = i;
@@ -137,16 +136,16 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     }
 
     private void updateRunButton() {
-        binding.btnRun.setEnabled(mValidSuManagerPos >= 2 && !new File("/dev/df").exists());
+        binding.btnRun.setEnabled(mValidSuManagerPos >= 1 && !new File("/dev/df").exists());
     }
 
     private void runExploit() {
         try {
             int rc = ExploitRunner.run(mDeCtx, this);
             String msg = rc == 0 ? "DFRoot: SUCCESS"
-                       : rc == 1 ? "DFRoot FAILED: ksud exited with error"
-                       : rc == 2 ? "DFRoot FAILED: check logs"
-                       : "DFRoot FAILED: failed to patch files";
+                       : rc == 1 ? "DFRoot: Error - ksud nonzero exit"
+                       : rc == 2 ? "DFRoot: Error - check logcat & dmesg"
+                       : "DFRoot: Error - failed to patch files";
             mMain.post(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
         } catch (Exception e) {
             Log.e(TAG, "exploit exception", e);

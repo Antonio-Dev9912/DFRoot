@@ -16,8 +16,8 @@ android {
         applicationId = "df.root"
         minSdk = 32
         targetSdk = 36
-        versionCode = 303
-        versionName = "3.3"
+        versionCode = 304
+        versionName = "3.4"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -40,7 +40,9 @@ android {
         }
         release {
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
