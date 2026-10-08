@@ -1,5 +1,6 @@
 package df.root;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,13 +18,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-import df.root.databinding.ActivityMainBinding;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,11 +31,14 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity implements IReporter {
+public class MainActivity extends Activity implements IReporter {
 
     private static final String TAG = "dfroot";
 
-    private ActivityMainBinding binding;
+    private Button btnRun;
+    private ScrollView outputScroll;
+    private TextView outputView;
+    private Spinner spinnerSuManager;
     private Context mDeCtx;
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final Executor mExec = Executors.newSingleThreadExecutor();
@@ -45,8 +48,8 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     public void report(String msg) {
         Log.i(TAG, msg.trim());
         mMain.post(() -> {
-            binding.outputView.append(msg);
-            binding.outputScroll.post(() -> binding.outputScroll.fullScroll(View.FOCUS_DOWN));
+            outputView.append(msg);
+            outputScroll.post(() -> outputScroll.fullScroll(View.FOCUS_DOWN));
         });
     }
 
@@ -54,9 +57,14 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDeCtx = createDeviceProtectedStorageContext();
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        setSupportActionBar(binding.toolbar);
+        setContentView(R.layout.activity_main);
+
+        getActionBar().setSubtitle("@diabl0w github/xda");
+
+        btnRun = findViewById(R.id.btnRun);
+        outputScroll = findViewById(R.id.outputScroll);
+        outputView = findViewById(R.id.outputView);
+        spinnerSuManager = findViewById(R.id.spinnerSuManager);
 
         PackageManager pm = getPackageManager();
         List<SuManagerEntry> entries = new ArrayList<>();
@@ -67,14 +75,14 @@ public class MainActivity extends AppCompatActivity implements IReporter {
         entries.sort((a, b) -> a.label.toString().compareToIgnoreCase(b.label.toString()));
         entries.add(0, new SuManagerEntry(null, "Select a SU Manager", null));
 
-        binding.spinnerSuManager.setAdapter(new SuManagerAdapter(this, entries));
+        spinnerSuManager.setAdapter(new SuManagerAdapter(this, entries));
 
         SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
         String saved = prefs.getString(ExploitRunner.PREF_SU_MANAGER, null);
         boolean savedFound = false;
         for (int i = 1; i < entries.size(); i++) {
             if (entries.get(i).packageName.equals(saved)) {
-                binding.spinnerSuManager.setSelection(i);
+                spinnerSuManager.setSelection(i);
                 mValidSuManagerPos = i;
                 savedFound = true;
                 break;
@@ -84,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
             prefs.edit().remove(ExploitRunner.PREF_SU_MANAGER).apply();
         }
 
-        binding.spinnerSuManager.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        spinnerSuManager.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
                 SuManagerEntry e = entries.get(pos);
@@ -92,14 +100,14 @@ public class MainActivity extends AppCompatActivity implements IReporter {
                 try {
                     ApplicationInfo ai = pm.getApplicationInfo(e.packageName, 0);
                     if (!new File(ai.nativeLibraryDir, "libksud.so").exists()) {
-                        report("Invalid selection: libksud.so not found in " + e.packageName + "\n");
-                        binding.spinnerSuManager.setSelection(mValidSuManagerPos);
+                        Toast.makeText(MainActivity.this, "Invalid: 'libksud.so' not found", Toast.LENGTH_SHORT).show();
+                        spinnerSuManager.setSelection(mValidSuManagerPos);
                         updateRunButton();
                         return;
                     }
                 } catch (PackageManager.NameNotFoundException ex) {
-                    report("Invalid selection: " + e.packageName + " not found\n");
-                    binding.spinnerSuManager.setSelection(mValidSuManagerPos);
+                    Toast.makeText(MainActivity.this, "Invalid: 'libksud.so' not found", Toast.LENGTH_SHORT).show();
+                    spinnerSuManager.setSelection(mValidSuManagerPos);
                     updateRunButton();
                     return;
                 }
@@ -113,9 +121,9 @@ public class MainActivity extends AppCompatActivity implements IReporter {
 
         updateRunButton();
 
-        binding.btnRun.setOnClickListener(v -> {
-            binding.btnRun.setEnabled(false);
-            binding.outputView.setText("");
+        btnRun.setOnClickListener(v -> {
+            btnRun.setEnabled(false);
+            outputView.setText("");
             mExec.execute(this::runExploit);
         });
     }
@@ -136,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements IReporter {
     }
 
     private void updateRunButton() {
-        binding.btnRun.setEnabled(mValidSuManagerPos >= 1 && !new File("/dev/df").exists());
+        btnRun.setEnabled(mValidSuManagerPos >= 1 && !new File("/dev/df").exists());
     }
 
     private void runExploit() {
@@ -174,18 +182,39 @@ public class MainActivity extends AppCompatActivity implements IReporter {
 
         @Override
         public View getView(int pos, View v, ViewGroup parent) {
-            return bindView(pos, v != null ? v
-                    : LayoutInflater.from(getContext()).inflate(R.layout.item_su_manager, parent, false));
+            if (v == null || v.getTag() != Boolean.FALSE)
+                v = LayoutInflater.from(getContext()).inflate(R.layout.item_su_manager_closed, parent, false);
+            v.setTag(Boolean.FALSE);
+            return bindClosedView(pos, v);
         }
 
         @Override
         public View getDropDownView(int pos, View v, ViewGroup parent) {
-            return getView(pos, v, parent);
+            if (v == null || v.getTag() != Boolean.TRUE)
+                v = LayoutInflater.from(getContext()).inflate(R.layout.item_su_manager, parent, false);
+            v.setTag(Boolean.TRUE);
+            return bindView(pos, v);
         }
 
         @Override
         public boolean isEnabled(int pos) {
             return getItem(pos).packageName != null;
+        }
+
+        private View bindClosedView(int pos, View v) {
+            SuManagerEntry e = getItem(pos);
+            ImageView icon = v.findViewById(R.id.iconApp);
+            TextView label = v.findViewById(R.id.labelApp);
+            if (e.packageName == null) {
+                icon.setVisibility(View.GONE);
+                label.setVisibility(View.VISIBLE);
+                label.setText(e.label);
+            } else {
+                icon.setVisibility(View.VISIBLE);
+                label.setVisibility(View.GONE);
+                icon.setImageDrawable(e.icon);
+            }
+            return v;
         }
 
         private View bindView(int pos, View v) {

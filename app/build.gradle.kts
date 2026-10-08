@@ -10,14 +10,14 @@ val signingProps = Properties().also {
 
 android {
     namespace = "df.root"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "df.root"
         minSdk = 32
-        targetSdk = 36
-        versionCode = 304
-        versionName = "3.4"
+        targetSdk = 37
+        versionCode = 400
+        versionName = "4.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -46,12 +46,6 @@ android {
         }
     }
 
-    applicationVariants.all {
-        outputs.all {
-            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "DFRoot_${versionName}.apk"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -59,10 +53,6 @@ android {
 
     lint {
         checkReleaseBuilds = false
-    }
-
-    buildFeatures {
-        viewBinding = true
     }
 
     externalNativeBuild {
@@ -78,9 +68,13 @@ android {
     }
 }
 
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set(output.versionName.map { vn -> "DFRoot_${vn}.apk" })
+        }
+    }
+}
+
 dependencies {
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.preference)
 }

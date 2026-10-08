@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/icon.png" width="96" />
+</p>
+
 # DFRoot [DirtyFrag (CVE-2026-43284)]
 
 DFRoot is an Android rooting tool that exploits CVE-2026-43284 (DirtyFrag) — a kernel page cache write primitive — to load a custom kernel module without requiring an unlocked bootloader. It is intentionally designed to be SU Manager agnostic and works with any KernelSU-compatible SU manager.
