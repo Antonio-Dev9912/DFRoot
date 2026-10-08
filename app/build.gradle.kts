@@ -4,9 +4,9 @@ plugins {
     id("com.android.application")
 }
 
-val signingProps = Properties().also {
-    it.load(rootProject.file("signing.properties").inputStream())
-}
+val signingProps = Properties()
+val signingPropsFile = rootProject.file("signing.properties")
+if (signingPropsFile.exists()) signingProps.load(signingPropsFile.inputStream())
 
 android {
     namespace = "df.root"
@@ -16,8 +16,8 @@ android {
         applicationId = "df.root"
         minSdk = 32
         targetSdk = 37
-        versionCode = 400
-        versionName = "4.0"
+        versionCode = 401
+        versionName = "4.1"
 
         ndk {
             abiFilters += listOf("arm64-v8a")

@@ -89,7 +89,7 @@ public class MainActivity extends Activity implements IReporter {
                 break;
             }
         }
-        if (!savedFound && saved != null) {
+        if (!savedFound && saved != null) { // Saved manager was uninstalled
             prefs.edit().remove(ExploitRunner.PREF_SU_MANAGER).apply();
         }
 

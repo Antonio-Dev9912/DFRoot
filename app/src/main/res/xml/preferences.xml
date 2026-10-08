@@ -9,7 +9,7 @@
     <SwitchPreference
         android:key="soft_reboot"
         android:title="Auto Soft Reboot"
-        android:summary="Applies to both Manual Start and Start at Boot.\nNOTE: this will only work if your SU manager supports it as a late-load arg"
+        android:summary="Applies to both Manual Start and Start at Boot."
         android:defaultValue="false" />
 
     <SwitchPreference
