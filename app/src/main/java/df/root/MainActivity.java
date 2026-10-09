@@ -1,8 +1,8 @@
 package df.root;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -12,8 +12,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -22,6 +20,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +38,9 @@ public class MainActivity extends Activity implements IReporter {
     private ScrollView outputScroll;
     private TextView outputView;
     private Spinner spinnerSuManager;
+    private Switch switchBootStart;
+    private Switch switchSoftReboot;
+    private Switch switchDisableModules;
     private Context mDeCtx;
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final Executor mExec = Executors.newSingleThreadExecutor();
@@ -59,12 +61,13 @@ public class MainActivity extends Activity implements IReporter {
         mDeCtx = createDeviceProtectedStorageContext();
         setContentView(R.layout.activity_main);
 
-        getActionBar().setSubtitle("@diabl0w github/xda");
-
         btnRun = findViewById(R.id.btnRun);
         outputScroll = findViewById(R.id.outputScroll);
         outputView = findViewById(R.id.outputView);
         spinnerSuManager = findViewById(R.id.spinnerSuManager);
+        switchBootStart = findViewById(R.id.switchBootStart);
+        switchSoftReboot = findViewById(R.id.switchSoftReboot);
+        switchDisableModules = findViewById(R.id.switchDisableModules);
 
         PackageManager pm = getPackageManager();
         List<SuManagerEntry> entries = new ArrayList<>();
@@ -100,6 +103,7 @@ public class MainActivity extends Activity implements IReporter {
                 if (e.packageName == null) return;
                 mValidSuManagerPos = pos;
                 prefs.edit().putString(ExploitRunner.PREF_SU_MANAGER, e.packageName).apply();
+                configureSettings(prefs);
                 updateRunButton();
             }
             @Override
@@ -115,19 +119,23 @@ public class MainActivity extends Activity implements IReporter {
         });
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
+    private void configureSettings(SharedPreferences prefs) {
+        ComponentName bootReceiver = new ComponentName(this, BootReceiver.class);
+        switchBootStart.setChecked(getPackageManager().getComponentEnabledSetting(bootReceiver)
+                == PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
+        switchBootStart.setOnCheckedChangeListener((button, enabled) ->
+                getPackageManager().setComponentEnabledSetting(bootReceiver,
+                        enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                                : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP));
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        switchSoftReboot.setChecked(prefs.getBoolean(ExploitRunner.PREF_SOFT_REBOOT, false));
+        switchSoftReboot.setOnCheckedChangeListener((button, enabled) ->
+                prefs.edit().putBoolean(ExploitRunner.PREF_SOFT_REBOOT, enabled).apply());
+
+        switchDisableModules.setChecked(prefs.getBoolean("disable_modules", false));
+        switchDisableModules.setOnCheckedChangeListener((button, enabled) ->
+                prefs.edit().putBoolean("disable_modules", enabled).apply());
     }
 
     private void updateRunButton() {

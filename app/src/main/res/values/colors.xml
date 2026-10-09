@@ -1,0 +1,7 @@
+<resources>
+    <color name="app_background">#FFFFFF</color>
+    <color name="top_bar_background">#FFFFFF</color>
+    <color name="app_foreground">#000000</color>
+    <color name="launch_button_background">#D9E2FF</color>
+    <color name="app_icon_background">#2F4577</color>
+</resources>
