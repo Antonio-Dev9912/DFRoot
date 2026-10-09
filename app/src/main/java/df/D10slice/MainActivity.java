@@ -1,4 +1,4 @@
-package df.root;
+package df.D10slice;
 
 import android.app.Activity;
 import android.content.ComponentName;

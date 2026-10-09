@@ -9,11 +9,11 @@ val signingPropsFile = rootProject.file("signing.properties")
 if (signingPropsFile.exists()) signingProps.load(signingPropsFile.inputStream())
 
 android {
-    namespace = "df.root"
+    namespace = "df.D10slice"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "df.root"
+        applicationId = "df.D10slice"
         minSdk = 32
         targetSdk = 37
         versionCode = 500
