@@ -16,13 +16,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.color.DynamicColors;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,18 +35,22 @@ import java.util.concurrent.Executors;
 public class MainActivity extends Activity implements IReporter {
 
     private static final String TAG = "dfroot";
+    private static final String PREF_LAUNCH_ROOT_SWITCH = "launch_root_switch";
 
-    private Button btnRun;
+    private MaterialCardView launchRootCard;
     private ScrollView outputScroll;
     private TextView outputView;
     private Spinner spinnerSuManager;
-    private Switch switchBootStart;
-    private Switch switchSoftReboot;
-    private Switch switchDisableModules;
+    private MaterialSwitch switchBootStart;
+    private MaterialSwitch switchSoftReboot;
+    private MaterialSwitch switchDisableModules;
+    private MaterialSwitch switchLaunchRoot;
     private Context mDeCtx;
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final Executor mExec = Executors.newSingleThreadExecutor();
     private int mValidSuManagerPos = 0;
+    private boolean isLaunching;
+    private boolean launchSwitchLatched;
 
     @Override
     public void report(String msg) {
@@ -57,17 +63,22 @@ public class MainActivity extends Activity implements IReporter {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         mDeCtx = createDeviceProtectedStorageContext();
         setContentView(R.layout.activity_main);
 
-        btnRun = findViewById(R.id.btnRun);
+        launchRootCard = findViewById(R.id.launchRootCard);
         outputScroll = findViewById(R.id.outputScroll);
         outputView = findViewById(R.id.outputView);
         spinnerSuManager = findViewById(R.id.spinnerSuManager);
         switchBootStart = findViewById(R.id.switchBootStart);
         switchSoftReboot = findViewById(R.id.switchSoftReboot);
         switchDisableModules = findViewById(R.id.switchDisableModules);
+        switchLaunchRoot = findViewById(R.id.switchLaunchRoot);
+        SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
+        launchSwitchLatched = prefs.getBoolean(PREF_LAUNCH_ROOT_SWITCH, false);
+        switchLaunchRoot.setChecked(launchSwitchLatched);
 
         PackageManager pm = getPackageManager();
         List<SuManagerEntry> entries = new ArrayList<>();
@@ -81,7 +92,6 @@ public class MainActivity extends Activity implements IReporter {
 
         spinnerSuManager.setAdapter(new SuManagerAdapter(this, entries));
 
-        SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
         String saved = prefs.getString(ExploitRunner.PREF_SU_MANAGER, null);
         boolean savedFound = false;
         for (int i = 1; i < entries.size(); i++) {
@@ -112,10 +122,15 @@ public class MainActivity extends Activity implements IReporter {
 
         updateRunButton();
 
-        btnRun.setOnClickListener(v -> {
-            btnRun.setEnabled(false);
-            outputView.setText("");
-            mExec.execute(this::runExploit);
+        launchRootCard.setOnClickListener(v -> launchRoot());
+        switchLaunchRoot.setOnCheckedChangeListener((button, checked) -> {
+            if (checked && !launchSwitchLatched) {
+                launchSwitchLatched = true;
+                prefs.edit().putBoolean(PREF_LAUNCH_ROOT_SWITCH, true).apply();
+                launchRoot();
+            } else if (launchSwitchLatched) {
+                button.setChecked(true);
+            }
         });
     }
 
@@ -139,7 +154,19 @@ public class MainActivity extends Activity implements IReporter {
     }
 
     private void updateRunButton() {
-        btnRun.setEnabled(mValidSuManagerPos >= 1 && !new File("/dev/df").exists());
+        boolean hasSuManager = mValidSuManagerPos >= 1;
+        boolean rootAlreadyLaunched = new File("/dev/df").exists();
+        launchRootCard.setEnabled(!isLaunching && hasSuManager && !rootAlreadyLaunched);
+        switchLaunchRoot.setEnabled(!isLaunching && hasSuManager
+                && (!rootAlreadyLaunched || switchLaunchRoot.isChecked()));
+    }
+
+    private void launchRoot() {
+        if (!launchRootCard.isEnabled()) return;
+        isLaunching = true;
+        updateRunButton();
+        outputView.setText("");
+        mExec.execute(this::runExploit);
     }
 
     private void runExploit() {
@@ -154,7 +181,10 @@ public class MainActivity extends Activity implements IReporter {
             Log.e(TAG, "exploit exception", e);
             report("\nexception: " + e + "\n");
         } finally {
-            mMain.post(this::updateRunButton);
+            mMain.post(() -> {
+                isLaunching = false;
+                updateRunButton();
+            });
         }
     }
 

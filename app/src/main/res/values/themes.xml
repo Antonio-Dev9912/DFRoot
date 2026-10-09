@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.DirtyFrag" parent="android:Theme.Material.Light">
+    <style name="Theme.DirtyFrag" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowLightStatusBar">true</item>

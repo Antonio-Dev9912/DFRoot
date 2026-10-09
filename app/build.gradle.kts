@@ -77,4 +77,5 @@ androidComponents {
 }
 
 dependencies {
+    implementation(libs.material)
 }

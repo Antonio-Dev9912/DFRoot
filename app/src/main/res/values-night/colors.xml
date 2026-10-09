@@ -2,6 +2,7 @@
     <color name="app_background">#000000</color>
     <color name="top_bar_background">#000000</color>
     <color name="app_foreground">#FFFFFF</color>
+    <color name="app_secondary_foreground">#B8B8BE</color>
     <color name="launch_button_background">#2F4577</color>
     <color name="app_icon_background">#2F4577</color>
 </resources>
