@@ -55,22 +55,39 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Validate signing config
+      - name: Check release signing secrets
+        id: signing
         if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ "${{ secrets.KEYSTORE }}" = "" ]; then
-            echo "::error::Signing secrets not configured. KEYSTORE secret is required for release builds."
+          if [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && \
+             [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          elif [ -z "$KEYSTORE" ] && [ -z "$KEYSTORE_PASSWORD" ] && \
+               [ -z "$KEY_ALIAS" ] && [ -z "$KEY_PASSWORD" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Release signing secrets are not configured. The uploaded APK will be unsigned and cannot update an APK signed with another key."
+            echo "The release APK is unsigned because signing secrets are not configured. It cannot update an APK signed with another key." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Configure all four signing secrets (KEYSTORE, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD), or remove all four to build an unsigned APK."
             exit 1
           fi
 
-      - name: Create signing.properties
-        if: github.event_name != 'pull_request'
+      - name: Configure release signing
+        if: github.event_name != 'pull_request' && steps.signing.outputs.configured == 'true'
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo KEYSTORE_FILE=../keystore.jks > signing.properties
-          echo KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }} >> signing.properties
-          echo KEY_ALIAS=${{ secrets.KEY_ALIAS }} >> signing.properties
-          echo KEY_PASSWORD=${{ secrets.KEY_PASSWORD }} >> signing.properties
-          echo ${{ secrets.KEYSTORE }} | base64 --decode > keystore.jks
+          printf 'KEYSTORE_FILE=../keystore.jks\nKEYSTORE_PASSWORD=%s\nKEY_ALIAS=%s\nKEY_PASSWORD=%s\n' \
+            "$KEYSTORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > signing.properties
+          printf '%s' "$KEYSTORE" | base64 --decode > keystore.jks
 
       - name: Download DF LKMs
         uses: actions/download-artifact@v7
@@ -94,13 +111,29 @@ jobs:
             ./gradlew :app:assembleRelease
           fi
 
-      - name: Upload Dslice APK
+      - name: Upload Dslice debug APK
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v7
         with:
-          name: Dslice
-          path: |
-            app/build/outputs/apk/release/Dslice_*.apk
-            app/build/outputs/apk/debug/Dslice_*.apk
+          name: Dslice-Debug-APK
+          path: app/build/outputs/apk/debug/Dslice_*.apk
+          if-no-files-found: error
+
+      - name: Upload signed Dslice release APK
+        if: github.event_name != 'pull_request' && steps.signing.outputs.configured == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Dslice-Release-APK-signed
+          path: app/build/outputs/apk/release/Dslice_*.apk
+          if-no-files-found: error
+
+      - name: Upload unsigned Dslice release APK
+        if: github.event_name != 'pull_request' && steps.signing.outputs.configured == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Dslice-Release-APK-unsigned
+          path: app/build/outputs/apk/release/Dslice_*.apk
+          if-no-files-found: error
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
