@@ -7,6 +7,12 @@ plugins {
 val signingProps = Properties()
 val signingPropsFile = rootProject.file("signing.properties")
 if (signingPropsFile.exists()) signingProps.load(signingPropsFile.inputStream())
+val releaseSigningConfigured = listOf(
+    "KEYSTORE_FILE",
+    "KEYSTORE_PASSWORD",
+    "KEY_ALIAS",
+    "KEY_PASSWORD",
+).all { !signingProps.getProperty(it).isNullOrBlank() }
 
 android {
     namespace = "df.D10slice"
@@ -25,11 +31,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file(signingProps.getProperty("KEYSTORE_FILE"))
-            storePassword = signingProps.getProperty("KEYSTORE_PASSWORD")
-            keyAlias = signingProps.getProperty("KEY_ALIAS")
-            keyPassword = signingProps.getProperty("KEY_PASSWORD")
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = file(signingProps.getProperty("KEYSTORE_FILE"))
+                storePassword = signingProps.getProperty("KEYSTORE_PASSWORD")
+                keyAlias = signingProps.getProperty("KEY_ALIAS")
+                keyPassword = signingProps.getProperty("KEY_PASSWORD")
+            }
         }
     }
 
@@ -39,7 +47,9 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
