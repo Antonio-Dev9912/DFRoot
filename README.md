@@ -37,7 +37,6 @@ Dslice is an Android rooting tool that exploits CVE-2026-43284 (DirtyFrag) — a
 2. Install a compatible SU Manager:
    - **Samsung Devices:**
      - [diabl0w's KernelSU](https://github.com/diabl0w/KernelSU/releases/latest)
-     - [zandatsu07's KernelSU-Next](https://github.com/zandatsu07/KernelSU-Next/releases/latest)
    - **Other Devices:**
      - [KernelSU](https://github.com/tiann/KernelSU/releases/latest)
      - [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next/releases/latest)
