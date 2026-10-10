@@ -1,1 +1,1 @@
--keep class df.root.IReporter { *; }
+-keep class df.D10slice.IReporter { *; }

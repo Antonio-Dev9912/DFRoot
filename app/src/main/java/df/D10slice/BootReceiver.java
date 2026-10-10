@@ -1,4 +1,4 @@
-package df.root;
+package df.D10slice;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

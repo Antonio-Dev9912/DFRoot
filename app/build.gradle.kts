@@ -9,15 +9,15 @@ val signingPropsFile = rootProject.file("signing.properties")
 if (signingPropsFile.exists()) signingProps.load(signingPropsFile.inputStream())
 
 android {
-    namespace = "df.root"
+    namespace = "df.D10slice"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "df.root"
+        applicationId = "df.D10slice"
         minSdk = 32
         targetSdk = 37
-        versionCode = 401
-        versionName = "4.1"
+        versionCode = 500
+        versionName = "5.0"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
@@ -71,10 +71,11 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set(output.versionName.map { vn -> "DFRoot_${vn}.apk" })
+            output.outputFileName.set(output.versionName.map { vn -> "Dslice_${vn}.apk" })
         }
     }
 }
 
 dependencies {
+    implementation(libs.material)
 }

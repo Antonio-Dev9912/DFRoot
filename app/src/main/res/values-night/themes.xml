@@ -1,9 +1,18 @@
 <resources>
-    <style name="Theme.DirtyFrag" parent="android:Theme.Material">
-        <item name="android:windowBackground">@android:color/black</item>
-        <item name="android:colorBackground">@android:color/black</item>
-        <item name="android:colorPrimary">#4A7A57</item>
-        <item name="android:colorAccent">#4A7A57</item>
+    <style name="Theme.DirtyFrag" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">#121212</item>
+        <item name="android:windowSplashScreenBackground">#121212</item>
+        <item name="android:statusBarColor">@color/top_bar_background</item>
+        <item name="android:colorBackground">@color/app_background</item>
+        <item name="android:colorPrimary">@color/top_bar_background</item>
+        <item name="android:colorPrimaryDark">@color/top_bar_background</item>
+        <item name="android:colorAccent">@color/launch_button_background</item>
+        <item name="android:colorControlNormal">@color/app_foreground</item>
+        <item name="android:textColorPrimary">@color/app_foreground</item>
+        <item name="android:textColorSecondary">@color/app_foreground</item>
         <item name="android:colorButtonNormal">@color/btn_background_color</item>
         <item name="android:buttonCornerRadius">24dp</item>
         <item name="android:buttonStyle">@style/Widget.DirtyFrag.Button</item>

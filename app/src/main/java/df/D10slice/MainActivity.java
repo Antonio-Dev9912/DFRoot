@@ -1,8 +1,8 @@
-package df.root;
+package df.D10slice;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -12,18 +12,19 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.color.DynamicColors;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,14 +36,19 @@ public class MainActivity extends Activity implements IReporter {
 
     private static final String TAG = "dfroot";
 
-    private Button btnRun;
+    private MaterialCardView launchRootCard;
     private ScrollView outputScroll;
     private TextView outputView;
     private Spinner spinnerSuManager;
+    private MaterialSwitch switchBootStart;
+    private MaterialSwitch switchSoftReboot;
+    private MaterialSwitch switchDisableModules;
+    private MaterialSwitch switchLaunchRoot;
     private Context mDeCtx;
     private final Handler mMain = new Handler(Looper.getMainLooper());
     private final Executor mExec = Executors.newSingleThreadExecutor();
     private int mValidSuManagerPos = 0;
+    private boolean isLaunching;
 
     @Override
     public void report(String msg) {
@@ -55,16 +61,21 @@ public class MainActivity extends Activity implements IReporter {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        DynamicColors.applyToActivityIfAvailable(this);
         super.onCreate(savedInstanceState);
         mDeCtx = createDeviceProtectedStorageContext();
         setContentView(R.layout.activity_main);
 
-        getActionBar().setSubtitle("@diabl0w github/xda");
-
-        btnRun = findViewById(R.id.btnRun);
+        launchRootCard = findViewById(R.id.launchRootCard);
         outputScroll = findViewById(R.id.outputScroll);
         outputView = findViewById(R.id.outputView);
         spinnerSuManager = findViewById(R.id.spinnerSuManager);
+        switchBootStart = findViewById(R.id.switchBootStart);
+        switchSoftReboot = findViewById(R.id.switchSoftReboot);
+        switchDisableModules = findViewById(R.id.switchDisableModules);
+        switchLaunchRoot = findViewById(R.id.switchLaunchRoot);
+        SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
+        switchLaunchRoot.setChecked(isRootActive());
 
         PackageManager pm = getPackageManager();
         List<SuManagerEntry> entries = new ArrayList<>();
@@ -78,7 +89,6 @@ public class MainActivity extends Activity implements IReporter {
 
         spinnerSuManager.setAdapter(new SuManagerAdapter(this, entries));
 
-        SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
         String saved = prefs.getString(ExploitRunner.PREF_SU_MANAGER, null);
         boolean savedFound = false;
         for (int i = 1; i < entries.size(); i++) {
@@ -100,6 +110,7 @@ public class MainActivity extends Activity implements IReporter {
                 if (e.packageName == null) return;
                 mValidSuManagerPos = pos;
                 prefs.edit().putString(ExploitRunner.PREF_SU_MANAGER, e.packageName).apply();
+                configureSettings(prefs);
                 updateRunButton();
             }
             @Override
@@ -108,30 +119,60 @@ public class MainActivity extends Activity implements IReporter {
 
         updateRunButton();
 
-        btnRun.setOnClickListener(v -> {
-            btnRun.setEnabled(false);
-            outputView.setText("");
-            mExec.execute(this::runExploit);
+        launchRootCard.setOnClickListener(v -> launchRoot());
+        switchLaunchRoot.setOnCheckedChangeListener((button, checked) -> {
+            if (checked && !isRootActive()) {
+                launchRoot();
+            } else if (!checked && isRootActive()) {
+                button.setChecked(true);
+            }
         });
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
+    protected void onResume() {
+        super.onResume();
+        switchLaunchRoot.setChecked(isRootActive());
+        updateRunButton();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    private void configureSettings(SharedPreferences prefs) {
+        ComponentName bootReceiver = new ComponentName(this, BootReceiver.class);
+        switchBootStart.setChecked(getPackageManager().getComponentEnabledSetting(bootReceiver)
+                == PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
+        switchBootStart.setOnCheckedChangeListener((button, enabled) ->
+                getPackageManager().setComponentEnabledSetting(bootReceiver,
+                        enabled ? PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                                : PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP));
+
+        switchSoftReboot.setChecked(prefs.getBoolean(ExploitRunner.PREF_SOFT_REBOOT, false));
+        switchSoftReboot.setOnCheckedChangeListener((button, enabled) ->
+                prefs.edit().putBoolean(ExploitRunner.PREF_SOFT_REBOOT, enabled).apply());
+
+        switchDisableModules.setChecked(prefs.getBoolean("disable_modules", false));
+        switchDisableModules.setOnCheckedChangeListener((button, enabled) ->
+                prefs.edit().putBoolean("disable_modules", enabled).apply());
     }
 
     private void updateRunButton() {
-        btnRun.setEnabled(mValidSuManagerPos >= 1 && !new File("/dev/df").exists());
+        boolean hasSuManager = mValidSuManagerPos >= 1;
+        boolean rootAlreadyLaunched = isRootActive();
+        launchRootCard.setEnabled(!isLaunching && hasSuManager && !rootAlreadyLaunched);
+        switchLaunchRoot.setEnabled(!isLaunching && hasSuManager
+                && (!rootAlreadyLaunched || switchLaunchRoot.isChecked()));
+    }
+
+    private boolean isRootActive() {
+        return new File("/dev/df").exists();
+    }
+
+    private void launchRoot() {
+        if (!launchRootCard.isEnabled()) return;
+        isLaunching = true;
+        updateRunButton();
+        outputView.setText("");
+        mExec.execute(this::runExploit);
     }
 
     private void runExploit() {
@@ -146,7 +187,11 @@ public class MainActivity extends Activity implements IReporter {
             Log.e(TAG, "exploit exception", e);
             report("\nexception: " + e + "\n");
         } finally {
-            mMain.post(this::updateRunButton);
+            mMain.post(() -> {
+                isLaunching = false;
+                switchLaunchRoot.setChecked(isRootActive());
+                updateRunButton();
+            });
         }
     }
 
