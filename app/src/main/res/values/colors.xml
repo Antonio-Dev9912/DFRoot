@@ -5,4 +5,6 @@
     <color name="app_secondary_foreground">#5D5D63</color>
     <color name="launch_button_background">#D9E2FF</color>
     <color name="app_icon_background">#2F4577</color>
+    <color name="launcher_icon_background">#FFFFFF</color>
+    <color name="launcher_icon_foreground">#121212</color>
 </resources>
