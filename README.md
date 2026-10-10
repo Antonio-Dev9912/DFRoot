@@ -1,5 +1,16 @@
 # Dslice [DirtyFrag (CVE-2026-43284)]
 
+> [!WARNING]
+> **Important notice for users of previous root methods (e.g., "Root My Galaxy"):**
+> Leftover modules from previous rooting methods will cause conflicts and crashes. 
+> 
+> **To ensure Dslice works correctly, you must clean your system first by following these steps:**
+> 1. Delete and uninstall **all** previously installed root modules.
+> 2. Perform a **soft reboot**.
+> 3. Immediately perform a **full (hard) reboot** to completely clear the system environment.
+> 
+> Once your system is fully clean, you can safely run Dslice.
+
 Dslice is an Android rooting tool that exploits CVE-2026-43284 (DirtyFrag) — a kernel page cache write primitive — to load a custom kernel module without requiring an unlocked bootloader. It is intentionally designed to be SU Manager agnostic and works with any KernelSU-compatible SU manager.
 
 > [!IMPORTANT]
