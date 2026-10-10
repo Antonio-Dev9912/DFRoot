@@ -1,8 +1,8 @@
 # Dslice [DirtyFrag (CVE-2026-43284)]
 
 > [!WARNING]
-> **Important notice for users of previous root methods (e.g., "Root My Galaxy"):**
-> Leftover modules from previous rooting methods will cause conflicts and crashes. 
+> **Important notice if you previously used other rooting tools:**
+> Leftover modules from any previous root methods can cause conflicts and crashes. 
 > 
 > **To ensure Dslice works correctly, you must clean your system first by following these steps:**
 > 1. Delete and uninstall **all** previously installed root modules.
