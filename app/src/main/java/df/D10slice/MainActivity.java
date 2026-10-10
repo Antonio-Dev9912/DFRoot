@@ -35,7 +35,6 @@ import java.util.concurrent.Executors;
 public class MainActivity extends Activity implements IReporter {
 
     private static final String TAG = "dfroot";
-    private static final String PREF_LAUNCH_ROOT_SWITCH = "launch_root_switch";
 
     private MaterialCardView launchRootCard;
     private ScrollView outputScroll;
@@ -50,7 +49,6 @@ public class MainActivity extends Activity implements IReporter {
     private final Executor mExec = Executors.newSingleThreadExecutor();
     private int mValidSuManagerPos = 0;
     private boolean isLaunching;
-    private boolean launchSwitchLatched;
 
     @Override
     public void report(String msg) {
@@ -77,8 +75,7 @@ public class MainActivity extends Activity implements IReporter {
         switchDisableModules = findViewById(R.id.switchDisableModules);
         switchLaunchRoot = findViewById(R.id.switchLaunchRoot);
         SharedPreferences prefs = mDeCtx.getSharedPreferences(ExploitRunner.PREFS_NAME, Context.MODE_PRIVATE);
-        launchSwitchLatched = prefs.getBoolean(PREF_LAUNCH_ROOT_SWITCH, false);
-        switchLaunchRoot.setChecked(launchSwitchLatched);
+        switchLaunchRoot.setChecked(isRootActive());
 
         PackageManager pm = getPackageManager();
         List<SuManagerEntry> entries = new ArrayList<>();
@@ -124,14 +121,19 @@ public class MainActivity extends Activity implements IReporter {
 
         launchRootCard.setOnClickListener(v -> launchRoot());
         switchLaunchRoot.setOnCheckedChangeListener((button, checked) -> {
-            if (checked && !launchSwitchLatched) {
-                launchSwitchLatched = true;
-                prefs.edit().putBoolean(PREF_LAUNCH_ROOT_SWITCH, true).apply();
+            if (checked && !isRootActive()) {
                 launchRoot();
-            } else if (launchSwitchLatched) {
+            } else if (!checked && isRootActive()) {
                 button.setChecked(true);
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        switchLaunchRoot.setChecked(isRootActive());
+        updateRunButton();
     }
 
     private void configureSettings(SharedPreferences prefs) {
@@ -155,10 +157,14 @@ public class MainActivity extends Activity implements IReporter {
 
     private void updateRunButton() {
         boolean hasSuManager = mValidSuManagerPos >= 1;
-        boolean rootAlreadyLaunched = new File("/dev/df").exists();
+        boolean rootAlreadyLaunched = isRootActive();
         launchRootCard.setEnabled(!isLaunching && hasSuManager && !rootAlreadyLaunched);
         switchLaunchRoot.setEnabled(!isLaunching && hasSuManager
                 && (!rootAlreadyLaunched || switchLaunchRoot.isChecked()));
+    }
+
+    private boolean isRootActive() {
+        return new File("/dev/df").exists();
     }
 
     private void launchRoot() {
@@ -183,6 +189,7 @@ public class MainActivity extends Activity implements IReporter {
         } finally {
             mMain.post(() -> {
                 isLaunching = false;
+                switchLaunchRoot.setChecked(isRootActive());
                 updateRunButton();
             });
         }
