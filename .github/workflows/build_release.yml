@@ -56,20 +56,29 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Validate signing secrets
+      - name: Check release signing secrets
+        id: signing
         env:
           KEYSTORE: ${{ secrets.KEYSTORE }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE" ] || [ -z "$KEYSTORE_PASSWORD" ] || \
-             [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo "::error::KEYSTORE, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD repository secrets are required to sign the release APK."
+          if [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && \
+             [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          elif [ -z "$KEYSTORE" ] && [ -z "$KEYSTORE_PASSWORD" ] && \
+               [ -z "$KEY_ALIAS" ] && [ -z "$KEY_PASSWORD" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Release signing secrets are not configured. The uploaded APK will be unsigned and cannot update an APK signed with another key."
+            echo "The release APK is unsigned because signing secrets are not configured. It cannot update an APK signed with another key." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Configure all four signing secrets (KEYSTORE, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD), or remove all four to build an unsigned APK."
             exit 1
           fi
 
       - name: Configure release signing
+        if: steps.signing.outputs.configured == 'true'
         env:
           KEYSTORE: ${{ secrets.KEYSTORE }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -98,8 +107,17 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Upload optimized Release APK
+        if: steps.signing.outputs.configured == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: Dslice-Release-APK
+          name: Dslice-Release-APK-signed
+          path: app/build/outputs/apk/release/Dslice_*.apk
+          if-no-files-found: error
+
+      - name: Upload unsigned Release APK
+        if: steps.signing.outputs.configured == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Dslice-Release-APK-unsigned
           path: app/build/outputs/apk/release/Dslice_*.apk
           if-no-files-found: error
