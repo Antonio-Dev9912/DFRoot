@@ -18,12 +18,16 @@ android {
     namespace = "df.D10slice"
     compileSdk = 37
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "df.D10slice"
         minSdk = 32
         targetSdk = 37
-        versionCode = 501
-        versionName = "5.1"
+        versionCode = 502
+        versionName = "5.2"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
