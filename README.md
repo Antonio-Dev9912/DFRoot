@@ -44,7 +44,7 @@ Dslice is an Android rooting tool that exploits CVE-2026-43284 (DirtyFrag) — a
    - **Other Devices:**
      - [KernelSU](https://github.com/tiann/KernelSU/releases/latest)
      - [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next/releases/latest)
-     - [KowSU](https://github.com/KOWX712/KernelSU/releases/latest)
+     - KowSU: [Channel (Builds)](https://t.me/kowsu_build) | [Group](https://t.me/+65r6-GN-xLw4OWRl)
 
 > If you have a custom KernelSU fork for a specific manufacturer, please make a pull request to add it here.
 
