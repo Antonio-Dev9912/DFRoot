@@ -1,3 +1,4 @@
+https://github.com/Mohyoo/Gemini-Py-CLI/blob/main/Assets%2FPalestine.jpg
 # Dslice [DirtyFrag (CVE-2026-43284)]
 
 > [!WARNING]
