@@ -26,8 +26,8 @@ android {
         applicationId = "df.D10slice"
         minSdk = 32
         targetSdk = 37
-        versionCode = 504
-        versionName = "5.4"
+        versionCode = 505
+        versionName = "5.5"
 
         ndk {
             abiFilters += listOf("arm64-v8a")
