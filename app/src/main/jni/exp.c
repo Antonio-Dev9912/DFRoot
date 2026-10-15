@@ -303,7 +303,19 @@ static int read_device_versions(int *andr, int *major, int *minor) {
     if (uname(&u) != 0) return -1;
     if (sscanf(u.release, "%d.%d", major, minor) != 2) return -1;
     const char *m = strstr(u.release, "android");
-    if (!m) return -1;
+    if (!m) {
+        printf("uname -r is missing Android version, trying getprop\n");
+
+        FILE *f = popen("getprop ro.vendor.build.version.release", "r");
+        if (!f) return -1;
+        char vendor_ver[16];
+        int read_version = fgets(vendor_ver, sizeof(vendor_ver), f) != NULL;
+        int close_status = pclose(f);
+        if (!read_version || close_status == -1 ||
+            sscanf(vendor_ver, "%d", andr) != 1)
+            return -1;
+        return (*andr > 0) ? 0 : -1;
+    }
     *andr = atoi(m + 7);
     return (*andr > 0) ? 0 : -1;
 }
