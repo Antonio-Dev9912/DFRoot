@@ -48,6 +48,9 @@ static __nocfi void patch_fn_ret_zero(void *fn)
     addrs[0] = (u8 *)fn + skip * 4;
     addrs[1] = (u8 *)fn + skip * 4 + 4;
     insns[0] = 0xD2800000;
+    /* PACIASP/PACIBSP are hint-space NOPs on CPUs without ARMv8.3 pointer auth,
+     * but RETAA/RETAB are not — they fault as undefined. Only emit them when
+     * hardware auth is actually present and the signed LR needs stripping. */
     insns[1] = (pac_b && system_supports_address_auth()) ? 0xD65F0FFF :
                (pac_a && system_supports_address_auth()) ? 0xD65F0BFF :
                                                            0xD65F03C0;

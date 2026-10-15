@@ -17,6 +17,8 @@
 #include <arpa/inet.h>
 #include "aes256.h"
 
+#define eos(s) (s + strlen(s))
+
 static const char kCrashDump[] = "/apex/com.android.runtime/bin/crash_dump64";
 static char    *libcxx_ko_target;
 
