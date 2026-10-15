@@ -6,6 +6,7 @@
 #include <linux/namei.h>
 #include <linux/ptrace.h>
 #include <linux/slab.h>
+#include <asm/cpufeature.h>
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("DFRoot LKM");
 
@@ -47,9 +48,9 @@ static __nocfi void patch_fn_ret_zero(void *fn)
     addrs[0] = (u8 *)fn + skip * 4;
     addrs[1] = (u8 *)fn + skip * 4 + 4;
     insns[0] = 0xD2800000;
-    insns[1] = pac_b ? 0xD65F0FFF :
-               pac_a ? 0xD65F0BFF :
-                       0xD65F03C0;
+    insns[1] = (pac_b && system_supports_address_auth()) ? 0xD65F0FFF :
+               (pac_a && system_supports_address_auth()) ? 0xD65F0BFF :
+                                                           0xD65F03C0;
 
     if (insn_patch_text(addrs, insns, 2))
         pr_warn("dfroot: patch failed at %px\n", fn);
