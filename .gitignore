@@ -26,6 +26,7 @@ lkm/modules.order
 lkm/Module.symvers
 
 # Generated binaries
+*.apk
 out/
 app/src/main/jni/splicehelper
 app/src/main/jni/ko/*.ko
