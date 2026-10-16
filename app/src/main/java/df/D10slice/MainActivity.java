@@ -54,6 +54,7 @@ public class MainActivity extends Activity implements IReporter {
     private SharedPreferences suManagerPrefs;
     private boolean isLaunching;
     private CompoundButton.OnCheckedChangeListener suManagerSwitchListener;
+    private CompoundButton.OnCheckedChangeListener launchRootSwitchListener;
     private PopupWindow suManagerPopup;
 
     @Override
@@ -120,13 +121,20 @@ public class MainActivity extends Activity implements IReporter {
         updateRunButton();
 
         launchRootCard.setOnClickListener(v -> launchRoot());
-        switchLaunchRoot.setOnCheckedChangeListener((button, checked) -> {
-            if (checked && !isRootActive()) {
-                launchRoot();
-            } else if (!checked && isRootActive()) {
-                button.setChecked(true);
+        launchRootSwitchListener = (button, checked) -> {
+            if (checked) {
+                if (isRootActive()) {
+                    setLaunchRootSwitchChecked(true);
+                } else if (isLaunching || mSelectedSuManagerPackage == null) {
+                    setLaunchRootSwitchChecked(false);
+                } else {
+                    launchRoot();
+                }
+            } else if (isRootActive() || isLaunching) {
+                setLaunchRootSwitchChecked(isRootActive());
             }
-        });
+        };
+        switchLaunchRoot.setOnCheckedChangeListener(launchRootSwitchListener);
     }
 
     private void activateOrChooseSuManager(List<SuManagerEntry> entries, SharedPreferences prefs) {
@@ -303,7 +311,7 @@ public class MainActivity extends Activity implements IReporter {
     protected void onResume() {
         super.onResume();
         refreshSuManagerSelection();
-        switchLaunchRoot.setChecked(isRootActive());
+        setLaunchRootSwitchChecked(isRootActive());
         updateRunButton();
     }
 
@@ -327,15 +335,12 @@ public class MainActivity extends Activity implements IReporter {
     }
 
     private void updateRunButton() {
-        boolean hasSuManager = mSelectedSuManagerPackage != null;
         boolean rootAlreadyLaunched = isRootActive();
         boolean suManagerLocked = isLaunching || rootAlreadyLaunched;
         suManagerRow.setClickable(!suManagerLocked);
         suManagerRow.setFocusable(!suManagerLocked);
         if (suManagerLocked && suManagerPopup != null) suManagerPopup.dismiss();
-        launchRootCard.setEnabled(!isLaunching && hasSuManager && !rootAlreadyLaunched);
-        switchLaunchRoot.setEnabled(!isLaunching && hasSuManager
-                && (!rootAlreadyLaunched || switchLaunchRoot.isChecked()));
+        switchLaunchRoot.setEnabled(true);
     }
 
     private boolean isRootActive() {
@@ -347,7 +352,7 @@ public class MainActivity extends Activity implements IReporter {
     }
 
     private void launchRoot() {
-        if (!launchRootCard.isEnabled()) return;
+        if (isLaunching || isRootActive() || mSelectedSuManagerPackage == null) return;
         isLaunching = true;
         updateRunButton();
         outputView.setText("");
@@ -368,10 +373,16 @@ public class MainActivity extends Activity implements IReporter {
         } finally {
             mMain.post(() -> {
                 isLaunching = false;
-                switchLaunchRoot.setChecked(isRootActive());
+                setLaunchRootSwitchChecked(isRootActive());
                 updateRunButton();
             });
         }
+    }
+
+    private void setLaunchRootSwitchChecked(boolean checked) {
+        switchLaunchRoot.setOnCheckedChangeListener(null);
+        switchLaunchRoot.setChecked(checked);
+        switchLaunchRoot.setOnCheckedChangeListener(launchRootSwitchListener);
     }
 
     private static class SuManagerEntry {
