@@ -95,6 +95,7 @@ public class MainActivity extends Activity implements IReporter {
         suManagers.sort((a, b) -> a.label.toString().compareToIgnoreCase(b.label.toString()));
         suManagerSwitchListener = (button, checked) -> {
             if (isSuManagerLocked()) {
+                setSuManagerSwitchChecked(mSelectedSuManagerPackage != null);
                 updateRunButton();
                 return;
             }
@@ -331,8 +332,6 @@ public class MainActivity extends Activity implements IReporter {
         boolean suManagerLocked = isLaunching || rootAlreadyLaunched;
         suManagerRow.setClickable(!suManagerLocked);
         suManagerRow.setFocusable(!suManagerLocked);
-        switchSuManager.setClickable(!suManagerLocked);
-        switchSuManager.setFocusable(!suManagerLocked);
         if (suManagerLocked && suManagerPopup != null) suManagerPopup.dismiss();
         launchRootCard.setEnabled(!isLaunching && hasSuManager && !rootAlreadyLaunched);
         switchLaunchRoot.setEnabled(!isLaunching && hasSuManager
