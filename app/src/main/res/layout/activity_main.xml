@@ -8,16 +8,56 @@
     android:background="@color/app_background"
     android:fitsSystemWindows="true">
 
-    <Spinner
-        android:id="@+id/spinnerSuManager"
+    <LinearLayout
+        android:id="@+id/suManagerRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:background="@null"
-        android:overlapAnchor="false" />
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="SU Manager"
+                android:textColor="@color/app_foreground"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/suManagerSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Not selected - required"
+                android:textColor="@color/app_secondary_foreground"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchSuManager"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="SU Manager"
+            app:thumbIcon="@null" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
